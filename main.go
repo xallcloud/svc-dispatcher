@@ -1,60 +1,49 @@
-// Copyright 2019 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     https://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// [START gae_go111_app]
-
-// Sample helloworld is an App Engine app.
 package main
 
-// [START import]
 import (
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/mux"
 )
 
-// [END import]
-// [START main_func]
+const (
+	appName    = "svc-dispatcher"
+	appVersion = "0.0.1-alfa001"
+	httpPort   = "8081"
+	topicName  = "topicNotifification"
+	projectID  = "xallcloud"
+)
 
 func main() {
-	http.HandleFunc("/", indexHandler)
 
-	// [START setting_port]
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8081"
-		log.Printf("Defaulting to port %s", port)
+		port = httpPort
+		log.Printf("Service: %s. Defaulting to port %s", appName, port)
 	}
 
-	log.Printf("Listening on port %s", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
-	// [END setting_port]
+	router := mux.NewRouter()
+
+	router.HandleFunc("/api/version", getVersionHanlder).Methods("GET")
+	router.HandleFunc("/", getStatusHanlder).Methods("GET")
+
+	log.Printf("Service: %s. Listening on port %s", appName, port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), router))
 }
 
-// [END main_func]
+func getVersionHanlder(w http.ResponseWriter, r *http.Request) {
+	log.Println("[/version:GET] Requested api version.")
 
-// [START indexHandler]
-
-// indexHandler responds to requests with our greeting.
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-	fmt.Fprint(w, "Dispatcher, version 0.1!")
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprint(w, fmt.Sprintf(`{"service": "%s", "version": "%s"}`, appName, appVersion))
 }
 
-// [END indexHandler]
-// [END gae_go111_app]
+func getStatusHanlder(w http.ResponseWriter, r *http.Request) {
+	log.Println("[/:GET] Requested service status.")
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprint(w, fmt.Sprintf(`{"service": "%s", "status":"running", version": "%s"}`, appName, appVersion))
+}
