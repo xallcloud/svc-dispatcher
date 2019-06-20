@@ -195,7 +195,7 @@ func pullMsgs(client *pubsub.Client, sub *pubsub.Subscription, topic *pubsub.Top
 	return nil
 }
 
-func subscribe(nc chan *pbt.Action) {
+func subscribe(channel chan *pbt.Action) {
 	log.Printf("[subscribe] starting goroutine: %s | %s\n", sub.String(), tcSubNot.String())
 
 	var mu sync.Mutex
@@ -209,12 +209,12 @@ func subscribe(nc chan *pbt.Action) {
 		received++
 		mu.Unlock()
 
-		log.Printf("Got RAW message [%d]: %q\n", received, string(msg.Data))
+		log.Printf("[subscribe] Got RAW message [%d]: %q\n", received, string(msg.Data))
 
 		//decode message
-		notif, er := DecRawNotification(msg.Data)
+		action, er := DecRawNotification(msg.Data)
 		if er != nil {
-			log.Printf("error decoding message: %v\n", er)
+			log.Printf("[subscribe] error decoding message: %v\n", er)
 
 			mu.Lock()
 			failed++
@@ -222,19 +222,18 @@ func subscribe(nc chan *pbt.Action) {
 			return
 		}
 
-		log.Printf("Process message (KeyID=%d) (AcID=%s)\n", notif.KeyID, notif.AcID)
+		log.Printf("[subscribe] Process message (KeyID=%d) (AcID=%s)\n", action.KeyID, action.AcID)
 
-		e := ProcessNewNotification(notif)
-
+		er = ProcessNewAction(action)
 		if e != nil {
-			log.Printf("error processing message: %v\n", er)
+			log.Printf("[subscribe] error processing message: %v\n", er)
 			mu.Lock()
 			failed++
 			mu.Unlock()
 			return
 		}
 
-		nc <- notif
+		channel <- action
 	})
 
 	if err != nil {
@@ -253,11 +252,11 @@ func DecRawNotification(d []byte) (*pbt.Action, error) {
 	return m, nil
 }
 
-// ProcessNewNotification will process new notifications from and start the process
+// ProcessNewAction will process new notifications from and start the process
 //   of initializing it, and deliver it after
-func ProcessNewNotification(n *pbt.Action) error {
+func ProcessNewAction(n *pbt.Action) error {
 	//first all, check the database for the record:
-	log.Println("[ProcessNewNotification] TODO...")
+	log.Println("[ProcessNewAction] TODO...")
 
 	return nil
 }
