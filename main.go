@@ -20,7 +20,7 @@ import (
 
 const (
 	appName          = "svc-dispatcher"
-	appVersion       = "0.0.1-alfa004-strange-error"
+	appVersion       = "0.0.1-alfa.5-strange-error-continues"
 	httpPort         = "8081"
 	topicPubDispatch = "dispatch"
 	topicSubNotify   = "notify"
@@ -79,7 +79,8 @@ func main() {
 		for {
 			select {
 			case a := <-actionsChannel:
-				log.Printf("[CHANNEL]: Got new action: [acID:%s] [cpID:%s] [action:%s] END TEXT!", a.AcID, a.CpID, a.Action)
+				log.Printf("[CHANNEL]: New action received on this channel [acID:%s]\n", a.AcID)
+				log.Printf("[CHANNEL]: New action: [acID:%s] [cpID:%s] [action:%s] END TEXT!\n", a.AcID, a.CpID, a.Action)
 
 				//apply some rules here by procesing event.
 
