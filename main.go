@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"sync"
 
 	"cloud.google.com/go/datastore"
@@ -19,11 +20,10 @@ import (
 
 const (
 	appName          = "svc-dispatcher"
-	appVersion       = "0.0.1-alfa003-subscriptions"
+	appVersion       = "0.0.1-alfa004-strange-error"
 	httpPort         = "8081"
 	topicPubDispatch = "dispatch"
 	topicSubNotify   = "notify"
-	topicSubReply    = "reply"
 	projectID        = "xallcloud"
 )
 
@@ -79,7 +79,7 @@ func main() {
 		for {
 			select {
 			case a := <-actionsChannel:
-				log.Printf("[CHANNEL]: Got new action: [acID:%s] [cpID:%s] [action:%s] %s", a.AcID, a.CpID, a.Action)
+				log.Printf("[CHANNEL]: Got new action: [acID:%s] [cpID:%s] [action:%s] END TEXT!", a.AcID, a.CpID, a.Action)
 
 				//apply some rules here by procesing event.
 
@@ -117,10 +117,29 @@ func main() {
 		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), router))
 	}()
 	//temporary
+	// select {}
 	/////////////////////////////////////////////////////////////////////////
-	//
+	// logic
 	/////////////////////////////////////////////////////////////////////////
-	select {}
+
+	log.Printf("wait for signal to terminate everything on client %s\n", appName)
+	signalChan := make(chan os.Signal, 1)
+	cleanupDone := make(chan bool)
+	signal.Notify(signalChan, os.Interrupt)
+	go func() {
+		for range signalChan {
+			log.Printf("\nReceived an interrupt! Tearing down...\n\n")
+
+			// Delete the subscription.
+			fmt.Printf("delete subscription %s\n", topicSubNotify)
+			if err := delete(psClient, topicSubNotify); err != nil {
+				log.Fatal(err)
+			}
+
+			cleanupDone <- true
+		}
+	}()
+	<-cleanupDone
 }
 
 func getVersionHanlder(w http.ResponseWriter, r *http.Request) {
@@ -263,5 +282,17 @@ func PubNotifyDevice(ctx context.Context, client *pubsub.Client, n *pbt.Notifica
 
 		log.Printf("[PubNotifyDevice] [eventId=%s] New NotifyDevice published. [mID=%s]", a.EventId, mID)
 	*/
+	return nil
+}
+
+func delete(client *pubsub.Client, subName string) error {
+	ctx := context.Background()
+
+	sub := client.Subscription(subName)
+	if err := sub.Delete(ctx); err != nil {
+		return err
+	}
+	log.Println("Subscription deleted.")
+
 	return nil
 }
