@@ -10,11 +10,13 @@ import (
 )
 
 const (
-	appName    = "svc-dispatcher"
-	appVersion = "0.0.1-alfa001"
-	httpPort   = "8081"
-	topicName  = "topicNotifification"
-	projectID  = "xallcloud"
+	appName        = "svc-dispatcher"
+	appVersion     = "0.0.1-alfa002-http-goroutine"
+	httpPort       = "8081"
+	topicPubNotify = "notify"
+	topicSubNotify = "notify"
+	topicSubReply  = "reply"
+	projectID      = "xallcloud"
 )
 
 func main() {
@@ -31,7 +33,11 @@ func main() {
 	router.HandleFunc("/", getStatusHanlder).Methods("GET")
 
 	log.Printf("Service: %s. Listening on port %s", appName, port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), router))
+	go func() {
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), router))
+	}()
+	//temporary
+	select {}
 }
 
 func getVersionHanlder(w http.ResponseWriter, r *http.Request) {
