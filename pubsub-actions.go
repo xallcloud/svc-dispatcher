@@ -27,7 +27,7 @@ func pullMsgs(client *pubsub.Client, sub *pubsub.Subscription, topic *pubsub.Top
 		log.Printf("Got RAW message : %q\n", string(msg.Data))
 
 		//decode message
-		a, er := decRawAction(msg.Data)
+		a, er := decodeRawAction(msg.Data)
 
 		if er != nil {
 			log.Printf("[sub.Receive] error decoding message: %v\n", er)
@@ -67,9 +67,9 @@ func subscribe(channel chan *pbt.Action) {
 		log.Printf("[subscribe] Got RAW message [%d]: %q\n", received, string(msg.Data))
 
 		//decode message
-		action, er := decRawAction(msg.Data)
+		action, er := decodeRawAction(msg.Data)
 		if er != nil {
-			log.Printf("[subscribe] error decoding message: %v\n", er)
+			log.Printf("[subscribe] error decoding action message: %v\n", er)
 
 			mu.Lock()
 			failed++
@@ -81,7 +81,7 @@ func subscribe(channel chan *pbt.Action) {
 
 		er = ProcessNewAction(action)
 		if er != nil {
-			log.Printf("[subscribe] error processing message: %v\n", er)
+			log.Printf("[subscribe] error processing action: %v\n", er)
 			mu.Lock()
 			failed++
 			mu.Unlock()
@@ -96,48 +96,15 @@ func subscribe(channel chan *pbt.Action) {
 	}
 }
 
-//decRawAction Will decode raw data into proto Action format
-func decRawAction(d []byte) (*pbt.Action, error) {
-	log.Println("[decRawAction] Unmarshal")
+//decodeRawAction Will decode raw data into proto Action format
+func decodeRawAction(d []byte) (*pbt.Action, error) {
+	log.Println("[decodeRawAction] Unmarshal")
 	m := new(pbt.Action)
 	err := proto.Unmarshal(d, m)
 	if err != nil {
 		return m, fmt.Errorf("unable to unserialize data. %v", err)
 	}
 	return m, nil
-}
-
-// ProcessNewAction will process new notifications from and start the process
-//   of initializing it, and deliver it after
-func ProcessNewAction(n *pbt.Action) error {
-	//first all, check the database for the record:
-	log.Println("[ProcessNewAction] TODO...")
-
-	return nil
-}
-
-// PubNotifyDevice does something
-func PubNotifyDevice(ctx context.Context, client *pubsub.Client, n *pbt.Notification) error {
-	log.Printf("[PubNotifyDevice] [eventId=%s] New Notification.", n.NtID)
-
-	/*
-		m, err := proto.Marshal(n)
-		if err != nil {
-			return fmt.Errorf("unable to serialize data. %v", err)
-		}
-
-		msg := &pubsub.Message{
-			Data: m,
-		}
-		var mID string
-		mID, err = topicPub.Publish(ctx, msg).Get(ctx)
-		if err != nil {
-			return fmt.Errorf("could not publish message. %v", err)
-		}
-
-		log.Printf("[PubNotifyDevice] [eventId=%s] New NotifyDevice published. [mID=%s]", a.EventId, mID)
-	*/
-	return nil
 }
 
 func delete(client *pubsub.Client, subName string) error {

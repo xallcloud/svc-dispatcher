@@ -18,7 +18,7 @@ import (
 
 const (
 	appName          = "svc-dispatcher"
-	appVersion       = "0.0.1-alfa.5-strange-error-continues"
+	appVersion       = "0.0.1-alfa.6-touch-db"
 	httpPort         = "8081"
 	topicPubDispatch = "dispatch"
 	topicSubNotify   = "notify"
@@ -42,6 +42,13 @@ func main() {
 
 	var err error
 	ctx := context.Background()
+	// DATASTORE Initialization
+	log.Println("Connect to Google 'datastore' on project: " + projectID)
+
+	dsClient, err = datastore.NewClient(ctx, projectID)
+	if err != nil {
+		log.Fatalf("Failed to create datastore client: %v", err)
+	}
 
 	// PUBSUB Initialization
 	log.Println("Connect to Google 'pub/sub' on project: " + projectID)
