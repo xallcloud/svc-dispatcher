@@ -56,5 +56,17 @@ func ProcessNewAction(a *pbt.Action) error {
 
 	log.Println("[ProcessNewAction] found assignments: ", len(asgns))
 
+	log.Println("[ProcessNewAction] check if notification exists acID:", a.AcID)
+
+	// Is in DB?
+	acs, err := gcp.NotificationGetByAcID(ctx, dsClient, a.AcID)
+	if err != nil {
+		return err
+	}
+
+	if len(acs) <= 0 {
+		return fmt.Errorf("[acID=%s] not found in actions datastore", a.AcID)
+	}
+
 	return nil
 }
