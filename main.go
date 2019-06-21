@@ -74,7 +74,9 @@ func main() {
 
 	actionsChannel := make(chan *pbt.Action)
 
-	go subscribe(actionsChannel)
+	notificationsChannel := make(chan *pbt.Notification)
+
+	go subscribe(actionsChannel, notificationsChannel)
 
 	/////////////////////////////////////////////////////////////////////////
 	// HTTP SERVER
@@ -106,7 +108,11 @@ func main() {
 
 					PubNotifyDevice(ctx, client, &n)
 				*/
+			case n := <-notificationsChannel:
+				log.Printf("[CHANNEL]: New action received on this channel [ntID:%s]\n", n.NtID)
+				log.Printf("[CHANNEL]: Publish new message to device [Message:%s]\n", n.Message)
 			}
+
 		}
 
 	}()
