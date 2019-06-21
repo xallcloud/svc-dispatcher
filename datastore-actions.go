@@ -125,14 +125,7 @@ func ProcessNewAction(a *pbt.Action) error {
 
 	}
 
-	if len(notifications) <= 0 {
-		log.Println("[ProcessNewAction] insert new notification: ", len(assignments))
-
-	}
-
-	if len(notifications) > 0 {
-		return fmt.Errorf("[acID=%s] found in notifications datastore", a.AcID)
-	}
+	log.Println("[ProcessNewAction] DONE! no errors.")
 
 	return nil
 }
