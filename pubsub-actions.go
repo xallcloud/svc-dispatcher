@@ -9,7 +9,9 @@ import (
 	"cloud.google.com/go/pubsub"
 	"github.com/gogo/protobuf/proto"
 
+	dst "github.com/xallcloud/api/datastore"
 	pbt "github.com/xallcloud/api/proto"
+	gcp "github.com/xallcloud/gcp"
 )
 
 func pullMsgs(client *pubsub.Client, sub *pubsub.Subscription, topic *pubsub.Topic) error {
@@ -79,7 +81,7 @@ func subscribeTopicNotify() {
 
 		log.Printf("[subscribe] Process message (KeyID=%d) (AcID=%s)\n", action.KeyID, action.AcID)
 
-		erAct := ProcessNewAction(action)
+		er = ProcessNewAction(action)
 		if er != nil {
 			log.Printf("[subscribe] error processing action: %v\n", er)
 			mu.Lock()
@@ -116,4 +118,42 @@ func delete(client *pubsub.Client, subName string) error {
 	log.Println("Subscription deleted.")
 
 	return nil
+}
+
+func publishNotification(n *pbt.Notification) {
+
+	log.Printf("[publishNotification] [acID=%s] [NtID=%s] New Dispatch notification...", n.AcID, n.NtID)
+
+	m, err := proto.Marshal(n)
+	if err != nil {
+		log.Printf("[publishNotification] unable to serialize data. %v", err)
+		return
+	}
+
+	msg := &pubsub.Message{
+		Data: m,
+	}
+
+	ctx := context.Background()
+
+	var mID string
+	mID, err = tcPubDis.Publish(ctx, msg).Get(ctx)
+	if err != nil {
+		log.Printf("[publishNotification] could not publish message. %v", err)
+		return
+	}
+
+	log.Printf("[publishNotification] [acID=%s] [NtID=%s] New Dispatch notification. DONE!", n.AcID, n.NtID)
+
+	e := &dst.Event{
+		NtID:          n.NtID,
+		CpID:          "",
+		DvID:          "",
+		Visibility:    gcp.VisibilityServer,
+		EvType:        gcp.EvTypeServices,
+		EvSubType:     "pubsub",
+		EvDescription: "Notification sent to svc-device service!: " + mID,
+	}
+
+	addNewEvent(ctx, e)
 }

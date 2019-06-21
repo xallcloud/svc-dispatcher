@@ -17,16 +17,17 @@ import (
 
 const (
 	appName          = "svc-dispatcher"
-	appVersion       = "0.0.1-alfa.6-touch-db"
+	appVersion       = "0.0.1-alfa.7-pub-to-device"
 	httpPort         = "8081"
-	topicPubDispatch = "dispatch"
 	topicSubNotify   = "notify"
+	topicPubDispatch = "dispatch"
 	projectID        = "xallcloud"
 )
 
 var dsClient *datastore.Client
 var psClient *pubsub.Client
 var tcSubNot *pubsub.Topic
+var tcPubDis *pubsub.Topic
 var sub *pubsub.Subscription
 
 func main() {
@@ -56,6 +57,16 @@ func main() {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
+	///////////////////////////////////////////////////////////////////
+	// topic to publish messages
+	tcPubDis, err = gcp.CreateTopic(topicPubDispatch, psClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Using topic %v to post notifications.\n", tcPubDis)
+
+	///////////////////////////////////////////////////////////////////
 	//topic to subscribe
 	tcSubNot, err = gcp.CreateTopic(topicPubDispatch, psClient)
 	if err != nil {

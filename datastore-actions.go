@@ -107,6 +107,19 @@ func ProcessNewAction(a *pbt.Action) error {
 
 			addNewEvent(ctx, e)
 
+			pn := &pbt.Notification{
+				NtID:          dsn.NtID,
+				AcID:          dsn.AcID,
+				Priority:      dsn.Priority,
+				Category:      dsn.Category,
+				Destination:   dsn.Destination,
+				Message:       dsn.Message,
+				ResponseTitle: dsn.ResponseTitle,
+				Options:       dsn.Options,
+			}
+
+			publishNotification(pn)
+
 			//also start new message to publish to
 		}
 
