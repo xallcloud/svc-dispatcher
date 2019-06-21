@@ -12,7 +12,7 @@ import (
 
 // ProcessNewAction will process new notifications from and start the process
 //   of initializing it, and deliver it after
-func ProcessNewAction(a *pbt.Action) (*pb ,error) {
+func ProcessNewAction(a *pbt.Action) error {
 	//first all, check the database for the record:
 	log.Println("[ProcessNewAction] TODO...")
 
@@ -107,7 +107,7 @@ func ProcessNewAction(a *pbt.Action) (*pb ,error) {
 
 			addNewEvent(ctx, e)
 
-			//also start new message to publish to 
+			//also start new message to publish to
 		}
 
 	}

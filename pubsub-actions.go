@@ -50,7 +50,7 @@ func pullMsgs(client *pubsub.Client, sub *pubsub.Subscription, topic *pubsub.Top
 	return nil
 }
 
-func subscribe(chAction chan *pbt.Action, chNotification chan *pbt.Notification) {
+func subscribeTopicNotify() {
 	log.Printf("[subscribe] starting goroutine: %s | %s\n", sub.String(), tcSubNot.String())
 
 	var mu sync.Mutex
@@ -79,7 +79,7 @@ func subscribe(chAction chan *pbt.Action, chNotification chan *pbt.Notification)
 
 		log.Printf("[subscribe] Process message (KeyID=%d) (AcID=%s)\n", action.KeyID, action.AcID)
 
-		notification, erAct := ProcessNewAction(action)
+		erAct := ProcessNewAction(action)
 		if er != nil {
 			log.Printf("[subscribe] error processing action: %v\n", er)
 			mu.Lock()
@@ -87,9 +87,7 @@ func subscribe(chAction chan *pbt.Action, chNotification chan *pbt.Notification)
 			mu.Unlock()
 			return
 		}
-
-		chAction <- action
-		chNotification <- notification
+		log.Printf("[subscribe] DONE (KeyID=%d) (AcID=%s)\n", action.KeyID, action.AcID)
 	})
 
 	if err != nil {
