@@ -14,44 +14,6 @@ import (
 	gcp "github.com/xallcloud/gcp"
 )
 
-func pullMsgs(client *pubsub.Client, sub *pubsub.Subscription, topic *pubsub.Topic) error {
-	log.Printf("[pullMsgs] starting: %s | %s\n", sub.String(), topic.String())
-	ctx := context.Background()
-
-	var mu sync.Mutex
-	received := 0
-	cctx, cancel := context.WithCancel(ctx)
-
-	log.Printf("[pullMsgs] before Receive %v\n", sub)
-
-	err := sub.Receive(cctx, func(ctx context.Context, msg *pubsub.Message) {
-		msg.Ack()
-		log.Printf("Got RAW message : %q\n", string(msg.Data))
-
-		//decode message
-		a, er := decodeRawAction(msg.Data)
-
-		if er != nil {
-			log.Printf("[sub.Receive] error decoding message: %v\n", er)
-		}
-
-		log.Printf("[sub.Receive] Process message [acID:%s]\n", a.AcID)
-
-		mu.Lock()
-		defer mu.Unlock()
-		received++
-		if received == 1 {
-			cancel()
-		}
-	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func subscribeTopicNotify() {
 	log.Printf("[subscribe] starting goroutine: %s | %s\n", sub.String(), tcSubNot.String())
 
@@ -106,18 +68,6 @@ func decodeRawAction(d []byte) (*pbt.Action, error) {
 		return m, fmt.Errorf("unable to unserialize data. %v", err)
 	}
 	return m, nil
-}
-
-func delete(client *pubsub.Client, subName string) error {
-	ctx := context.Background()
-
-	sub := client.Subscription(subName)
-	if err := sub.Delete(ctx); err != nil {
-		return err
-	}
-	log.Println("Subscription deleted.")
-
-	return nil
 }
 
 func publishNotification(n *pbt.Notification) {

@@ -106,7 +106,7 @@ func main() {
 			log.Printf("\nReceived an interrupt! Tearing down...\n\n")
 			// Delete the subscription.
 			fmt.Printf("delete subscription %s\n", topicSubNotify)
-			if err := delete(psClient, topicSubNotify); err != nil {
+			if err := gcp.DeleteSubscription(psClient, topicSubNotify); err != nil {
 				log.Fatal(err)
 			}
 			cleanupDone <- true
