@@ -7,7 +7,7 @@ import (
 )
 
 func getVersionHanlder(w http.ResponseWriter, r *http.Request) {
-	log.Println("[/version:GET] Requested api version.")
+	log.Println("[/version:GET] Requested api version. " + appVersion)
 
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, fmt.Sprintf(`{"service": "%s", "version": "%s"}`, appName, appVersion))

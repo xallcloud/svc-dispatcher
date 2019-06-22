@@ -50,15 +50,15 @@ func ProcessNewAction(a *pbt.Action) error {
 		return errAsgns
 	}
 
-	//if len(assignments) <= 0 {
-	//	return fmt.Errorf("[cpID=%s] not found in assignments datastore", a.CpID)
-	//}
-
 	log.Println("[ProcessNewAction] found assignments: ", len(assignments))
+
+	if len(assignments) <= 0 {
+		log.Println("[ProcessNewAction] No assigments! do nothing", a.AcID)
+		return fmt.Errorf("no assigments found for this callpoint [cpID=%s]", a.CpID)
+	}
 
 	log.Println("[ProcessNewAction] check if notification exists acID:", a.AcID)
 
-	// Is in DB?
 	notifications, errNts := gcp.NotificationsGetByAcID(ctx, dsClient, a.AcID)
 	if errNts != nil {
 		return errNts
@@ -66,16 +66,7 @@ func ProcessNewAction(a *pbt.Action) error {
 
 	log.Println("[ProcessNewAction] total notifications in datastore: ", len(notifications))
 
-	//TODO: Add info to events/motifications if no assignments were added
-	if len(assignments) <= 0 {
-		log.Println("[ProcessNewAction] TODO - no assigments present. add event entry", a.AcID)
-
-		return nil
-	}
-
-	//TODO: see what to do when notification already exists: len(notifications)
-
-	//create notifications for individual assignments
+	//create individual notifications for each individual assignments to device
 	for _, as := range assignments {
 		log.Println("[ProcessNewAction] creating new notification: ", len(assignments))
 
@@ -121,10 +112,7 @@ func ProcessNewAction(a *pbt.Action) error {
 			}
 
 			publishNotification(pn)
-
-			//also start new message to publish to
 		}
-
 	}
 
 	log.Println("[ProcessNewAction] DONE! no errors.")
