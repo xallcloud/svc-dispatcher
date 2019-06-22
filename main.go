@@ -85,8 +85,7 @@ func main() {
 
 	// HTTP Server initialization
 	// define all the routes for the HTTP server.
-	//   The implementation is done on the "handler*.go" files
-	// version
+	//   The implementation is done on the "handlers.go" files
 	router := mux.NewRouter()
 	router.HandleFunc("/api/version", getVersionHanlder).Methods("GET")
 	router.HandleFunc("/", getStatusHanlder).Methods("GET")
