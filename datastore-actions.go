@@ -101,7 +101,7 @@ func ProcessNewAction(a *pbt.Action) error {
 				DvID:          as.DvID,
 				Visibility:    gcp.VisibilityAll,
 				EvType:        gcp.EvTypeStart,
-				EvSubType:     gcp.EvSubTypeStartStep1 + appVersion,
+				EvSubType:     gcp.EvSubTypeStartStep1,
 				EvDescription: "Notification started",
 			}
 

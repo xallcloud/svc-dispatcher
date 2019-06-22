@@ -143,7 +143,7 @@ func publishNotification(n *pbt.Notification) {
 		return
 	}
 
-	log.Printf("[publishNotification] [acID=%s] [NtID=%s] New Dispatch notification. DONE!", n.AcID, n.NtID)
+	log.Printf("[publishNotification] [acID=%s] [NtID=%s] New Dispatch notification %s. DONE!", n.AcID, n.NtID, mID)
 
 	e := &dst.Event{
 		NtID:          n.NtID,
@@ -151,8 +151,8 @@ func publishNotification(n *pbt.Notification) {
 		DvID:          n.DvID,
 		Visibility:    gcp.VisibilityServer,
 		EvType:        gcp.EvTypeServices,
-		EvSubType:     "pubsub" + appVersion,
-		EvDescription: "Notification sent to svc-device service!: " + mID,
+		EvSubType:     "pubsub",
+		EvDescription: "Notification sent to svc-notify.",
 	}
 
 	addNewEvent(ctx, e)
