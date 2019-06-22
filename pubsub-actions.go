@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sync"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/gogo/protobuf/proto"
@@ -14,30 +13,21 @@ import (
 	gcp "github.com/xallcloud/gcp"
 )
 
+//subscribeTopicNotify will create a subscription to new notify
+//  and process the basic action
 func subscribeTopicNotify() {
 	log.Printf("[subscribe] starting goroutine: %s | %s\n", sub.String(), tcSubNot.String())
-
-	var mu sync.Mutex
-	received := 0
-	failed := 0
 	ctx := context.Background()
 	err := sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
+		// always acknowledge message
 		msg.Ack()
 
-		mu.Lock()
-		received++
-		mu.Unlock()
+		log.Printf("[subscribe] Got RAW message: %q\n", string(msg.Data))
 
-		log.Printf("[subscribe] Got RAW message [%d]: %q\n", received, string(msg.Data))
-
-		//decode message
+		//decode notification message into proper format
 		action, er := decodeRawAction(msg.Data)
 		if er != nil {
 			log.Printf("[subscribe] error decoding action message: %v\n", er)
-
-			mu.Lock()
-			failed++
-			mu.Unlock()
 			return
 		}
 
@@ -46,9 +36,6 @@ func subscribeTopicNotify() {
 		er = ProcessNewAction(action)
 		if er != nil {
 			log.Printf("[subscribe] error processing action: %v\n", er)
-			mu.Lock()
-			failed++
-			mu.Unlock()
 			return
 		}
 		log.Printf("[subscribe] DONE (KeyID=%d) (AcID=%s)\n", action.KeyID, action.AcID)
@@ -59,7 +46,7 @@ func subscribeTopicNotify() {
 	}
 }
 
-//decodeRawAction Will decode raw data into proto Action format
+//decodeRawAction will decode raw data into proto Action format
 func decodeRawAction(d []byte) (*pbt.Action, error) {
 	log.Println("[decodeRawAction] Unmarshal")
 	m := new(pbt.Action)
@@ -70,31 +57,32 @@ func decodeRawAction(d []byte) (*pbt.Action, error) {
 	return m, nil
 }
 
+//publishNotification will publish a new notification message to pubsub
 func publishNotification(n *pbt.Notification) {
 
 	log.Printf("[publishNotification] [acID=%s] [NtID=%s] New Dispatch notification...", n.AcID, n.NtID)
 
+	//put message in raw format
 	m, err := proto.Marshal(n)
 	if err != nil {
 		log.Printf("[publishNotification] unable to serialize data. %v", err)
 		return
 	}
-
 	msg := &pubsub.Message{
 		Data: m,
 	}
 
+	//publish action
 	ctx := context.Background()
-
 	var mID string
 	mID, err = tcPubDis.Publish(ctx, msg).Get(ctx)
 	if err != nil {
 		log.Printf("[publishNotification] could not publish message. %v", err)
 		return
 	}
-
 	log.Printf("[publishNotification] [acID=%s] [NtID=%s] New Dispatch notification %s. DONE!", n.AcID, n.NtID, mID)
 
+	//add to events
 	e := &dst.Event{
 		NtID:          n.NtID,
 		CpID:          n.CpID,
@@ -104,6 +92,5 @@ func publishNotification(n *pbt.Notification) {
 		EvSubType:     "pubsub",
 		EvDescription: "Notification sent to svc-notify.",
 	}
-
 	addNewEvent(ctx, e)
 }

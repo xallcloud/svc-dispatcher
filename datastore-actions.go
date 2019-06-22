@@ -13,60 +13,40 @@ import (
 // ProcessNewAction will process new notifications from and start the process
 //   of initializing it, and deliver it after
 func ProcessNewAction(a *pbt.Action) error {
-	//first all, check the database for the record:
-	log.Println("[ProcessNewAction] TODO...")
-
 	ctx := context.Background()
 
+	// first check if action exists
 	log.Println("[ProcessNewAction] check if action exists acID:", a.AcID)
-
-	// Is in DB?
 	actions, errAcs := gcp.ActionGetByAcID(ctx, dsClient, a.AcID)
 	if errAcs != nil {
 		return errAcs
 	}
-
 	if len(actions) <= 0 {
 		return fmt.Errorf("[acID=%s] not found in actions datastore", a.AcID)
 	}
 
+	// also check if there is a matching callpoint
 	log.Println("[ProcessNewAction] check if callpoint exists acID:", a.CpID)
-
-	// get callpoint
 	callpoints, errCps := gcp.CallpointGetByCpID(ctx, dsClient, a.CpID)
 	if errCps != nil {
 		return errCps
 	}
-
 	if len(callpoints) <= 0 {
 		return fmt.Errorf("[cpID=%s] not found in actions datastore", a.CpID)
 	}
 
+	// also check if this callpoint has assignmnets
 	log.Println("[ProcessNewAction] check if assignment exists by cpID:", a.CpID)
-
-	// first check if there already exists this Callpoint ID:
 	assignments, errAsgns := gcp.AssignmentsByCpID(ctx, dsClient, a.CpID)
 	if errAsgns != nil {
 		return errAsgns
 	}
-
-	log.Println("[ProcessNewAction] found assignments: ", len(assignments))
-
 	if len(assignments) <= 0 {
 		log.Println("[ProcessNewAction] No assigments! do nothing", a.AcID)
 		return fmt.Errorf("no assigments found for this callpoint [cpID=%s]", a.CpID)
 	}
 
-	log.Println("[ProcessNewAction] check if notification exists acID:", a.AcID)
-
-	notifications, errNts := gcp.NotificationsGetByAcID(ctx, dsClient, a.AcID)
-	if errNts != nil {
-		return errNts
-	}
-
-	log.Println("[ProcessNewAction] total notifications in datastore: ", len(notifications))
-
-	//create individual notifications for each individual assignments to device
+	//create individual notifications for each individual assignment to device
 	for _, as := range assignments {
 		log.Println("[ProcessNewAction] creating new notification: ", len(assignments))
 
@@ -79,9 +59,7 @@ func ProcessNewAction(a *pbt.Action) error {
 			ResponseTitle: "Please select one of the options",
 			Options:       "ack,cancel",
 		}
-
 		dsn, errN := gcp.NotificationAdd(ctx, dsClient, n)
-
 		if errN != nil {
 			log.Println("[ProcessNewAction] error inserting new notification: ", errN)
 		} else {
@@ -95,9 +73,9 @@ func ProcessNewAction(a *pbt.Action) error {
 				EvSubType:     gcp.EvSubTypeStartStep1,
 				EvDescription: "Notification started",
 			}
-
 			addNewEvent(ctx, e)
 
+			//publish new instruction to start notification of message
 			pn := &pbt.Notification{
 				NtID:          dsn.NtID,
 				AcID:          dsn.AcID,
@@ -110,12 +88,11 @@ func ProcessNewAction(a *pbt.Action) error {
 				CpID:          as.CpID,
 				DvID:          as.DvID,
 			}
-
 			publishNotification(pn)
 		}
 	}
 
-	log.Println("[ProcessNewAction] DONE! no errors.")
+	log.Println("[ProcessNewAction] DONE! No errors.")
 
 	return nil
 }
