@@ -17,7 +17,7 @@ import (
 
 const (
 	appName          = "svc-dispatcher"
-	appVersion       = "0.0.1-alfa.7-pub-to-device"
+	appVersion       = "d.10-fix"
 	httpPort         = "8081"
 	topicSubNotify   = "notify"
 	topicPubDispatch = "dispatch"

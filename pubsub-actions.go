@@ -147,11 +147,11 @@ func publishNotification(n *pbt.Notification) {
 
 	e := &dst.Event{
 		NtID:          n.NtID,
-		CpID:          "",
-		DvID:          "",
+		CpID:          n.CpID,
+		DvID:          n.DvID,
 		Visibility:    gcp.VisibilityServer,
 		EvType:        gcp.EvTypeServices,
-		EvSubType:     "pubsub",
+		EvSubType:     "pubsub" + appVersion,
 		EvDescription: "Notification sent to svc-device service!: " + mID,
 	}
 

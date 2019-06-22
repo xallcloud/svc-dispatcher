@@ -101,7 +101,7 @@ func ProcessNewAction(a *pbt.Action) error {
 				DvID:          as.DvID,
 				Visibility:    gcp.VisibilityAll,
 				EvType:        gcp.EvTypeStart,
-				EvSubType:     gcp.EvSubTypeStartStep1,
+				EvSubType:     gcp.EvSubTypeStartStep1 + appVersion,
 				EvDescription: "Notification started",
 			}
 
@@ -116,6 +116,8 @@ func ProcessNewAction(a *pbt.Action) error {
 				Message:       dsn.Message,
 				ResponseTitle: dsn.ResponseTitle,
 				Options:       dsn.Options,
+				CpID:          as.CpID,
+				DvID:          as.DvID,
 			}
 
 			publishNotification(pn)
