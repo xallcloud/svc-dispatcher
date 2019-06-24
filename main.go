@@ -17,7 +17,7 @@ import (
 
 const (
 	appName          = "svc-dispatcher"
-	appVersion       = "d.3.13-cleanup"
+	appVersion       = "0.0.1"
 	httpDefaultPort  = "8081"
 	topicSubNotify   = "notify"
 	topicPubDispatch = "dispatch"
